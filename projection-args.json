@@ -1,0 +1,11 @@
+{
+"output path"  : "projection-output",
+"dataset path" : "/mnt/d/KITTI Dataset",
+"cam to cam"   : "calib_cam_to_cam.txt",
+"velo to cam"  : "calib_velo_to_cam.txt",
+"velo"         : "velodyne_points.pkl",
+"date"         : "2011_09_26",
+"drive"        : "0005",
+"camera no"    : "00",
+"image no"     : 0
+}
