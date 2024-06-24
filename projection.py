@@ -2,6 +2,7 @@
 
 import os
 from pprint import pprint
+import pickle as pkl
 import json
 
 import numpy as np
@@ -33,7 +34,7 @@ os.makedirs(outputdir, exist_ok=True)
 # load the dataset
 dataset = pykitti.raw(basedir, date, drive) # type: ignore
 
-# load the image data
+# read the image
 if cam_no == "00":
     img = np.asarray(dataset.get_cam0(img_no))
 elif cam_no == "01":
@@ -47,3 +48,11 @@ elif cam_no == "03":
 pprint(f'Image shape: {img.shape}')
 plt.imshow(img)
 plt.savefig(os.path.join(outputdir, f'img_{img_no:06}.png'))
+
+# read the velodyne points
+points_velo = dataset.get_velo(img_no)
+pprint(f'Velodyne points shape: {points_velo.shape}')
+
+# save the velodyne points
+with open(os.path.join(outputdir, f'velo_{img_no:06}.pkl'), 'wb') as f:
+    pkl.dump(points_velo, f)
