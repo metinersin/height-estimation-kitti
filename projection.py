@@ -104,6 +104,7 @@ points_img = np.dot(Prect, points_cam)
 points_img = points_img / points_img[2, :]
 points_img = points_img[:2, :]
 points_img = points_img.T
+points_img = points_img.astype(int)
 print(f'Points in image frame shape: {points_img.shape}')
 
 # determine good points
@@ -113,5 +114,15 @@ idx_height = np.logical_and(points_img[:, 1] >= 0, points_img[:, 1] < img_height
 idx = np.logical_and(np.logical_and(idx_z, idx_width), idx_height)
 print(idx.shape)
 
+points_velo_good = points_velo[idx]
+points_cam_good = points_cam[:, idx].T
+points_img_good = points_img[idx]
+print(points_velo_good.shape)
+print(points_cam_good.shape)
+print(points_img_good.shape)
 
-
+# plot the points
+u, v = points_img_good.T
+z = points_cam_good[:, 2]
+plt.scatter([u], [v], c=[z], cmap='rainbow_r', alpha=0.2, s=2)
+plt.savefig(os.path.join(outputdir, f'projection_{img_no:06}.png'))
