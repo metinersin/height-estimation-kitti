@@ -1,7 +1,6 @@
 """projects 3D points onto image"""
 
 import os
-from pprint import pprint
 import pickle as pkl
 import json
 
@@ -50,13 +49,14 @@ img_height = img.shape[0]
 img_width = img.shape[1]
 
 # save the image
-pprint(f'Image shape: {img.shape}')
+print(f'Image shape: {img.shape}')
 plt.imshow(img)
 plt.savefig(os.path.join(outputdir, f'img_{img_no:06}.png'))
 
 # read the velodyne points
 points_velo = dataset.get_velo(img_no)
-pprint(f'Velodyne points shape: {points_velo.shape}')
+print(f'Velodyne points shape: {points_velo.shape}')
+print(points_velo)
 
 # save the velodyne points
 with open(os.path.join(outputdir, f'velo_{img_no:06}.pkl'), 'wb') as f:
@@ -82,11 +82,36 @@ elif cam_no == "03":
 else:
     raise ValueError(f'Invalid camera number: {cam_no}')
 
-pprint(f'T_cam_velo: {T_cam_velo}')
-pprint(f'Rrect: {Rrect}')
-pprint(f'Prect: {Prect}')
+print(f'T_cam_velo: {T_cam_velo}')
+print(f'Rrect: {Rrect}')
+print(f'Prect: {Prect}')
 
 # save the calibration matrices
 np.savetxt(os.path.join(outputdir, f'T_cam_velo_{img_no:06}.txt'), T_cam_velo)
 np.savetxt(os.path.join(outputdir, f'Rrect_{img_no:06}.txt'), Rrect)
 np.savetxt(os.path.join(outputdir, f'Prect_{img_no:06}.txt'), Prect)
+
+# project the velodyne points onto the image
+points_velo_prepared = points_velo.copy()
+points_velo_prepared[:, 3] = 1
+points_velo_prepared = points_velo_prepared.T
+print(f'Velodyne points prepared shape: {points_velo_prepared.shape}')
+
+points_cam = np.dot(T_cam_velo, points_velo_prepared)
+print(f'Points in camera frame shape: {points_cam.shape}')
+
+points_img = np.dot(Prect, points_cam)
+points_img = points_img / points_img[2, :]
+points_img = points_img[:2, :]
+points_img = points_img.T
+print(f'Points in image frame shape: {points_img.shape}')
+
+# determine good points
+idx_z = points_cam[2, :] >= 0
+idx_width = np.logical_and(points_img[:, 0] >= 0, points_img[:, 0] < img_width)
+idx_height = np.logical_and(points_img[:, 1] >= 0, points_img[:, 1] < img_height)
+idx = np.logical_and(np.logical_and(idx_z, idx_width), idx_height)
+print(idx.shape)
+
+
+
