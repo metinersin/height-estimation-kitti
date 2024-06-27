@@ -3,6 +3,8 @@ __pycache__
 .mypy_cache
 *-output
 *.code-workspace
+mypy.ini
+.pylintrc
 deneme*
 pykitti
 kitti-velo2cam
