@@ -1,128 +1,72 @@
-"""projects 3D points onto image"""
-
-import os
-import pickle as pkl
-import json
+'''Utility functions related to projection fo 3D points to 2D image plane.'''
 
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import pykitti
 
-matplotlib.use('Agg')
+import kitti
+import point_cloud
 
-# read the arguments
-ARGS_FILE = 'projection-args.json'
 
-with open(ARGS_FILE, 'r', encoding='utf8') as f:
-    args = json.load(f)
+if __name__ == "__main__":
 
-outputdir         : str = args['output path']
-basedir           : str = args['dataset path']
-calib_cam_to_cam  : str = args['cam to cam']
-calib_velo_to_cam : str = args['velo to cam']
-# velo              : str = args['velo']
-date              : str = args['date']
-drive             : str = args['drive']
-cam_no            : str = args['camera no']
-img_no            : int = args['image no']
+    matplotlib.use('Agg')
 
-# create the output directory
-os.makedirs(outputdir, exist_ok=True)
+    output_dir = "projection-output"
+    dataset_dir = "/mnt/d/KITTI Dataset"
+    date = "2011_09_26"
+    drive = 5
+    cam = 2
+    frame = 50
 
-# load the dataset
-dataset = pykitti.raw(basedir, date, drive) # type: ignore
+    velo_to_cam, r_rect, p_rect = kitti.calib_data(date, cam)
+    print(f'Velo to cam:\n{velo_to_cam}')
+    print(f'R rect:\n{r_rect}')
+    print(f'P rect:\n{p_rect}')
 
-# read the image
-if cam_no == "00":
-    img = np.asarray(dataset.get_cam0(img_no))
-elif cam_no == "01":
-    img = np.asarray(dataset.get_cam1(img_no))
-elif cam_no == "02":
-    img = np.asarray(dataset.get_cam2(img_no))
-elif cam_no == "03":
-    img = np.asarray(dataset.get_cam3(img_no))
-else:
-    raise ValueError(f'Invalid camera number: {cam_no}')
+    points_lidar = kitti.velodyne_data(date, drive, frame)
+    print(f'Points lidar shape: {points_lidar.shape}')
+    points_lidar_diameter = point_cloud.approximate_diameter(points_lidar)
+    print(f'Diameter: {points_lidar_diameter}')
+    point_cloud.plot_number_of_points_in_radius(
+        points_lidar, np.linspace(0, points_lidar_diameter / 2, 100),
+        sample_size=200,
+    )
 
-img_height = img.shape[0]
-img_width = img.shape[1]
+    img = kitti.image(date, drive, cam, frame)
+    img_height, img_width = img.shape[0:2]
+    print(f'Image shape: {img.shape}')
+    print(f'Height: {img_height}')
+    print(f'Width: {img_width}')
 
-# save the image
-print(f'Image shape: {img.shape}')
-plt.imshow(img)
-plt.savefig(os.path.join(outputdir, f'img_{img_no:06}.png'))
+    points_img, idx = point_cloud.draw_velodyne_on_image(
+        img, points_lidar, velo_to_cam, r_rect, p_rect, alpha=0.1,
+        title='Velodyne Points',
+        output_name='velodyne_points_on_image.png'
+    )
+    print(f'Points image shape: {points_img.shape}')
+    print(f'Max height: {points_img[:, 0].max()}')
+    print(f'Max width: {points_img[:, 1].max()}')
+    print(f'Good points image shape: {points_img[idx, :].shape}')
+    print(f'Max height: {points_img[idx, :][:, 0].max()}')
+    print(f'Max width: {points_img[idx, :][:, 1].max()}')
 
-# read the velodyne points
-points_velo = dataset.get_velo(img_no)
-print(f'Velodyne points shape: {points_velo.shape}')
-print(points_velo)
+    scale_field_on_lidar = point_cloud.scale_field_on_lidar(
+        points_lidar, img_height, img_width,
+        velo_to_cam=velo_to_cam,
+        r_rect=r_rect,
+        p_rect=p_rect,
+        scaling=-0.3,
+        neighbors=50,
+        radius=10
+    )
+    print(f'Scale field on points shape: {scale_field_on_lidar.shape}')
 
-# save the velodyne points
-with open(os.path.join(outputdir, f'velo_{img_no:06}.pkl'), 'wb') as f:
-    pkl.dump(points_velo, f)
-
-# read the calibration matrices
-if cam_no == "00":
-    T_cam_velo : np.ndarray = dataset.calib.T_cam0_velo
-    Rrect      : np.ndarray = dataset.calib.R_rect_00
-    Prect      : np.ndarray = dataset.calib.P_rect_00
-elif cam_no == "01":
-    T_cam_velo = dataset.calib.T_cam1_velo
-    Rrect      = dataset.calib.R_rect_01
-    Prect      = dataset.calib.P_rect_01
-elif cam_no == "02":
-    T_cam_velo = dataset.calib.T_cam2_velo
-    Rrect      = dataset.calib.R_rect_02
-    Prect      = dataset.calib.P_rect_02
-elif cam_no == "03":
-    T_cam_velo = dataset.calib.T_cam3_velo
-    Rrect      = dataset.calib.R_rect_03
-    Prect      = dataset.calib.P_rect_03
-else:
-    raise ValueError(f'Invalid camera number: {cam_no}')
-
-print(f'T_cam_velo: {T_cam_velo}')
-print(f'Rrect: {Rrect}')
-print(f'Prect: {Prect}')
-
-# save the calibration matrices
-np.savetxt(os.path.join(outputdir, f'T_cam_velo_{img_no:06}.txt'), T_cam_velo)
-np.savetxt(os.path.join(outputdir, f'Rrect_{img_no:06}.txt'), Rrect)
-np.savetxt(os.path.join(outputdir, f'Prect_{img_no:06}.txt'), Prect)
-
-# project the velodyne points onto the image
-points_velo_prepared = points_velo.copy()
-points_velo_prepared[:, 3] = 1
-points_velo_prepared = points_velo_prepared.T
-print(f'Velodyne points prepared shape: {points_velo_prepared.shape}')
-
-points_cam = np.dot(T_cam_velo, points_velo_prepared)
-print(f'Points in camera frame shape: {points_cam.shape}')
-
-points_img = np.dot(Prect, points_cam)
-points_img = points_img / points_img[2, :]
-points_img = points_img[:2, :]
-points_img = points_img.T
-points_img = points_img.astype(int)
-print(f'Points in image frame shape: {points_img.shape}')
-
-# determine good points
-idx_z = points_cam[2, :] >= 0
-idx_width = np.logical_and(points_img[:, 0] >= 0, points_img[:, 0] < img_width)
-idx_height = np.logical_and(points_img[:, 1] >= 0, points_img[:, 1] < img_height)
-idx = np.logical_and(np.logical_and(idx_z, idx_width), idx_height)
-print(idx.shape)
-
-points_velo_good = points_velo[idx]
-points_cam_good = points_cam[:, idx].T
-points_img_good = points_img[idx]
-print(points_velo_good.shape)
-print(points_cam_good.shape)
-print(points_img_good.shape)
-
-# plot the points
-u, v = points_img_good.T
-z = points_cam_good[:, 2]
-plt.scatter([u], [v], c=[z], cmap='rainbow_r', alpha=0.2, s=2)
-plt.savefig(os.path.join(outputdir, f'projection_{img_no:06}.png'))
+    scale_field_on_img = point_cloud.to_field_on_img(
+        scale_field_on_lidar, points_lidar,
+        img_height, img_width,
+        velo_to_cam=velo_to_cam,
+        r_rect=r_rect,
+        p_rect=p_rect
+    )
+    print(f'Scale field on image shape: {scale_field_on_img.shape}')
