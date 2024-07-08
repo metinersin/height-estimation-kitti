@@ -312,7 +312,8 @@ def imshow(
     title: str = '',
     xlabel: str = '',
     ylabel: str = '',
-    output_name: str | None = None
+    output_name: str | None = None,
+    **kwargs
 ) -> None:
     """
     Visualize data using matplotlib's `imshow` function with optional \
@@ -327,6 +328,7 @@ def imshow(
         ylabel (str, optional): The label for the y-axis. Defaults to an empty string.
         output_name (str | None, optional): The name of the output file to \
             save the image. Defaults to None.
+        **kwargs: Additional keyword arguments for the `imshow` function.
 
     Returns:
         None
@@ -334,7 +336,7 @@ def imshow(
 
     assert data.ndim in (2, 3)
 
-    plt.imshow(data, cmap=cmap)
+    plt.imshow(data, cmap=cmap, **kwargs)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
@@ -416,8 +418,8 @@ def scatter_on_image(
             on Image'.
         xlabel (str, optional): The label for the x-axis. Defaults to ''.
         ylabel (str, optional): The label for the y-axis. Defaults to ''.
-        output_name (str, optional): The name of the output image file. Defaults \
-            to 'scatter_plot_on_image.png'.
+        output_name (str | None, optional): The name of the output image file. Defaults \
+            to None.
 
     Returns:
         None: This function does not return anything. The scatter plot is saved \
@@ -482,7 +484,7 @@ def draw_velodyne_on_image(
     points_img, idx = cam_to_img(
         points_cam, r_rect, p_rect, img_height=img_height, img_width=img_width
     )
-    
+
     scatter_on_image(img, points_img[idx], c=points_cam[idx, 2], **kwargs)
 
     return points_img, idx
@@ -491,24 +493,37 @@ def draw_velodyne_on_image(
 def draw_field_on_image(
     field_on_img: np.ndarray,
     img: np.ndarray,
-    title: str = 'Scatter Plot on Image',
+    title: str = '',
     xlabel: str = '',
     ylabel: str = '',
-    output_name: str = 'scatter_plot_on_image.png'
+    output_name: str | None = None
 ) -> None:
+    """
+    Draw the heatmap plot of a field on an image.
 
-    # Plot the image
-    plt.imshow(img)
+    Parameters:
+        field_on_img (np.ndarray): The heatmap to overlay on the image.
+        img (np.ndarray): The image on which to draw the heatmap.
+        title (str, optional): The title of the plot. Defaults to an empty string.
+        xlabel (str, optional): The label for the x-axis. Defaults to an empty string.
+        ylabel (str, optional): The label for the y-axis. Defaults to an empty string.
+        output_name (str | None, optional): The name of the output file to save the \
+            plot. Defaults to None.
 
-    # Overlay the heatmap
-    plt.imshow(field_on_img, cmap='hot', interpolation='nearest', alpha=0.5)
+    Returns:
+        None
+    """
 
-    # Customize as needed (e.g., add labels, colorbar, etc.)
-    plt.title(title)
+    draw(img, title=title, xlabel=xlabel, ylabel=ylabel)
+
+    imshow(field_on_img, cmap='Reds', alpha=0.5)
+
     plt.colorbar(label="Intensity")
 
-    plt.show()
-    plt.savefig(output_name, dpi=300, bbox_inches='tight')
+    if output_name is not None:
+        plt.show()
+        plt.savefig(output_name, dpi=300, bbox_inches='tight')
+        plt.close()
 
 
 # data exploration functions
