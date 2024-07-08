@@ -187,11 +187,16 @@ def to_field_on_img(
 
     """
 
+    # change from lidar coordinates to camera coordinates
     points_cam = lidar_to_cam(points_lidar, velo_to_cam)
+
+    # project points on to image plane
     points_img, idx = cam_to_img(
         points_cam, r_rect, p_rect, img_height=img_height, img_width=img_width
     )
-    field_on_img = np.zeros((img_height, img_width)) - 1
+
+    # project the scale field on to image plane
+    field_on_img = np.full((img_height, img_width), np.nan)
     field_on_img[points_img[idx][:, 1],
                  points_img[idx][:, 0]] = field_on_lidar[idx]
 
@@ -227,8 +232,9 @@ def scale_field_on_lidar(
         np.ndarray: Scale field for height estimation.
     """
 
-    # project originial points onto img
+    # change from lidar coordinates to camera coordinates and project points on to image plane
     points_cam = lidar_to_cam(points_lidar, velo_to_cam)
+
     points_img, _ = cam_to_img(
         points_cam, r_rect, p_rect, img_height=img_height, img_width=img_width
     )
@@ -239,7 +245,8 @@ def scale_field_on_lidar(
     )
     normal_vectors *= scaling
 
-    # project displaced points onto img
+    # change from lidar coordinates to camera coordinates and project the
+    # displaced points on to image plane
     displaced_points_lidar = points_lidar + normal_vectors
     displaced_points_cam = lidar_to_cam(displaced_points_lidar, velo_to_cam)
     displaced_points_img, _ = cam_to_img(
@@ -448,7 +455,7 @@ def draw_field_on_image(
     plt.imshow(img)
 
     # Overlay the heatmap
-    plt.imshow(field_on_img, cmap='Reds', interpolation='nearest', alpha=0.5)
+    plt.imshow(field_on_img, cmap='hot', interpolation='nearest', alpha=0.5)
 
     # Customize as needed (e.g., add labels, colorbar, etc.)
     plt.title(title)
