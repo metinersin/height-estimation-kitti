@@ -51,6 +51,14 @@ if __name__ == "__main__":
     print(f'Max height: {points_img[idx, :][:, 0].max()}')
     print(f'Max width: {points_img[idx, :][:, 1].max()}')
 
+    normal_vectors = point_cloud.normals(points_lidar)
+    displaced_points_lidar = points_lidar + normal_vectors * 1
+    displaced_points_img, idx = point_cloud.draw_velodyne_on_image(
+        img, displaced_points_lidar, velo_to_cam, r_rect, p_rect, alpha=0.1,
+        title='Displaced Velodyne Points',
+        output_name='displaced_velodyne_points_on_image.png'
+    )
+
     scale_field_on_lidar = point_cloud.scale_field_on_lidar(
         points_lidar, img_height, img_width,
         velo_to_cam=velo_to_cam,
@@ -70,3 +78,7 @@ if __name__ == "__main__":
         p_rect=p_rect
     )
     print(f'Scale field on image shape: {scale_field_on_img.shape}')
+
+    point_cloud.draw_field_on_image(
+        scale_field_on_img*100, img, title='Scale Field', output_name='scale_field_on_image.png')
+    print(scale_field_on_img)
