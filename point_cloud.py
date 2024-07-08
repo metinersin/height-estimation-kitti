@@ -298,6 +298,43 @@ def scale_field_on_img(
 # plotting functions
 
 
+def imshow(
+    data: np.ndarray,
+    *,
+    cmap: str | None = None,
+    title: str = '',
+    xlabel: str = '',
+    ylabel: str = '',
+    output_name: str | None = None
+) -> None:
+    """
+    Visualize data using matplotlib's `imshow` function with optional \
+        title, x-label, y-label, and save the image if output_name is provided.
+
+    Parameters:
+        data (np.ndarray): The image to be displayed.
+        cmap (str | None, optional): The colormap to use for the image. If None, \
+            the default colormap is used. Defaults to None.
+        title (str, optional): The title of the image. Defaults to an empty string.
+        xlabel (str, optional): The label for the x-axis. Defaults to an empty string.
+        ylabel (str, optional): The label for the y-axis. Defaults to an empty string.
+        output_name (str | None, optional): The name of the output file to \
+            save the image. Defaults to None.
+
+    Returns:
+        None
+    """
+
+    plt.imshow(data, cmap=cmap)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+
+    if output_name is not None:
+        plt.show()
+        plt.savefig(output_name, dpi=300, bbox_inches='tight')
+        plt.close()
+
 def draw_img(
     img: np.ndarray,
     *,
