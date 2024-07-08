@@ -342,36 +342,40 @@ def imshow(
         plt.savefig(output_name, dpi=300, bbox_inches='tight')
         plt.close()
 
-def draw_img(
+def draw(
     img: np.ndarray,
     *,
     title: str = '',
     xlabel: str = '',
     ylabel: str = '',
-    output_name: str | None = 'scatter_plot_on_image.png'
+    output_name: str | None = None
 ) -> None:
     """
-    Display an image with optional title, x-label, y-label, and save the image if output_name is provided.
+    Display an image with optional title, x-label, y-label, and save the image \
+        if output_name is provided.
 
     Parameters:
         img (np.ndarray): The image to be displayed.
         title (str, optional): The title of the image. Defaults to an empty string.
         xlabel (str, optional): The label for the x-axis. Defaults to an empty string.
         ylabel (str, optional): The label for the y-axis. Defaults to an empty string.
-        output_name (str | None, optional): The name of the output file to save the image. Defaults to 'scatter_plot_on_image.png'.
+        output_name (str | None, optional): The name of the output file to \
+            save the image. Defaults to None.
 
     Returns:
         None
     """
 
-    plt.imshow(img, cmap='gray' if img.ndim == 2 else None)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
-    plt.show()
+    assert img.ndim in (2, 3)
+    assert img.shape[0] > 10
+    assert img.shape[1] > 10
+
+    imshow(img, title=title, xlabel=xlabel, ylabel=ylabel)
 
     if output_name is not None:
+        plt.show()
         plt.savefig(output_name, dpi=300, bbox_inches='tight')
+        plt.close()
 
 
 def scatter_on_image(
