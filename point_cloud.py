@@ -325,15 +325,23 @@ def imshow(
         None
     """
 
+    assert data.ndim in (2, 3)
+
     plt.imshow(data, cmap=cmap)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
 
+    height = data.shape[0]
+    width = data.shape[1]
+    plt.xlim(0, width)
+    plt.ylim(height, 0)
+
     if output_name is not None:
         plt.show()
         plt.savefig(output_name, dpi=300, bbox_inches='tight')
         plt.close()
+
 
 def draw(
     img: np.ndarray,
@@ -372,16 +380,17 @@ def draw(
 
 
 def scatter_on_image(
-        img: np.ndarray,
-        points_img: np.ndarray, *,
-        c: np.ndarray | None = None,
-        alpha: float = 0.5,
-        size: int = 2,
-        cmap: str = 'rainbow_r',
-        title: str = 'Scatter Plot on Image',
-        xlabel: str = '',
-        ylabel: str = '',
-        output_name: str = 'scatter_plot_on_image.png'
+    img: np.ndarray,
+    points_img: np.ndarray,
+    *,
+    c: np.ndarray | None = None,
+    alpha: float = 0.5,
+    size: int = 2,
+    cmap: str = 'rainbow_r',
+    title: str = 'Scatter Plot on Image',
+    xlabel: str = '',
+    ylabel: str = '',
+    output_name: str | None = None
 ) -> None:
     """
     Scatter data points on an image and save the plot as an image file.
@@ -420,21 +429,15 @@ def scatter_on_image(
         assert c.ndim == 1
         assert c.shape[0] == points_img.shape[0]
 
-    plt.imshow(img, cmap='gray' if img.ndim == 2 else None)
+    draw(img, title=title, xlabel=xlabel, ylabel=ylabel)
+
     u, v = points_img.T
     plt.scatter(u, v, c=c, cmap=cmap, alpha=alpha, s=size)
 
-    img_height = img.shape[0]
-    img_width = img.shape[1]
-    plt.xlim(0, img_width)
-    plt.ylim(img_height, 0)
-
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
-
-    plt.savefig(output_name, dpi=300, bbox_inches='tight')
-    plt.close()
+    if output_name is not None:
+        plt.show()
+        plt.savefig(output_name, dpi=300, bbox_inches='tight')
+        plt.close()
 
 
 def draw_velodyne_on_image(
@@ -468,9 +471,11 @@ def draw_velodyne_on_image(
     img_height, img_width = img.shape[:2]
 
     points_cam = lidar_to_cam(points_lidar, velo_to_cam)
+
     points_img, idx = cam_to_img(
         points_cam, r_rect, p_rect, img_height=img_height, img_width=img_width
     )
+    
     scatter_on_image(img, points_img[idx], c=points_cam[idx, 2], **kwargs)
 
     return points_img, idx
