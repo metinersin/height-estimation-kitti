@@ -1,13 +1,13 @@
 __pycache__
 .venv
 .mypy_cache
-*-output
-*.code-workspace
 mypy.ini
 .pylintrc
-deneme*
 _*
+
 pykitti
 kitti-velo2cam
 *.png
+*.code-workspace
+
 projection.py
