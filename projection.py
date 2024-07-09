@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 import kitti
 import point_cloud
+import plotting
 
 
 if __name__ == "__main__":
