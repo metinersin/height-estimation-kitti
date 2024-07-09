@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import open3d as o3d
 
+import plotting
+
 
 def lidar_to_cam(points_lidar: np.ndarray, velo_to_cam: np.ndarray) -> np.ndarray:
     """
@@ -305,104 +307,6 @@ def scale_field_on_img(
 # plotting functions
 
 
-def draw_img(
-    img: np.ndarray,
-    *,
-    title: str = '',
-    xlabel: str = '',
-    ylabel: str = '',
-    output_name: str | None = 'scatter_plot_on_image.png'
-) -> None:
-    """
-    Display an image with optional title, x-label, y-label, and save the image if output_name is provided.
-
-    Parameters:
-        img (np.ndarray): The image to be displayed.
-        title (str, optional): The title of the image. Defaults to an empty string.
-        xlabel (str, optional): The label for the x-axis. Defaults to an empty string.
-        ylabel (str, optional): The label for the y-axis. Defaults to an empty string.
-        output_name (str | None, optional): The name of the output file to save the image. Defaults to 'scatter_plot_on_image.png'.
-
-    Returns:
-        None
-    """
-
-    plt.imshow(img, cmap='gray' if img.ndim == 2 else None)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
-    plt.show()
-
-    if output_name is not None:
-        plt.savefig(output_name, dpi=300, bbox_inches='tight')
-
-
-def scatter_on_image(
-        img: np.ndarray,
-        points_img: np.ndarray, *,
-        c: np.ndarray | None = None,
-        alpha: float = 0.5,
-        size: int = 2,
-        cmap: str = 'rainbow_r',
-        title: str = 'Scatter Plot on Image',
-        xlabel: str = '',
-        ylabel: str = '',
-        output_name: str = 'scatter_plot_on_image.png'
-) -> None:
-    """
-    Scatter data points on an image and save the plot as an image file.
-
-    Parameters:
-        img (np.ndarray): The input image as a NumPy array.
-        data (np.ndarray): The data points to scatter on the image.
-        c (np.ndarray | None, optional): The colors of the data points. If \
-            None, default colors will be used. Defaults to None.
-        alpha (float, optional): The transparency of the data points. Defaults \
-            to 0.5.
-        size (int, optional): The size of the data points. Defaults to 2.
-        cmap (str, optional): The colormap to use for coloring the data points. \
-            Defaults to 'rainbow_r'.
-        title (str, optional): The title of the plot. Defaults to 'Scatter Plot \
-            on Image'.
-        xlabel (str, optional): The label for the x-axis. Defaults to ''.
-        ylabel (str, optional): The label for the y-axis. Defaults to ''.
-        output_name (str, optional): The name of the output image file. Defaults \
-            to 'scatter_plot_on_image.png'.
-
-    Returns:
-        None: This function does not return anything. The scatter plot is saved \
-            as an image file.
-
-    Raises:
-        AssertionError: If the input image or data has invalid dimensions or shapes.
-    """
-    assert img.ndim in (2, 3)
-    assert img.shape[-1] == 3 or img.shape[-1] >= 10
-
-    assert points_img.ndim == 2
-    assert points_img.shape[1] == 2
-
-    if c is not None:
-        assert c.ndim == 1
-        assert c.shape[0] == points_img.shape[0]
-
-    plt.imshow(img, cmap='gray' if img.ndim == 2 else None)
-    u, v = points_img.T
-    plt.scatter(u, v, c=c, cmap=cmap, alpha=alpha, s=size)
-
-    img_height = img.shape[0]
-    img_width = img.shape[1]
-    plt.xlim(0, img_width)
-    plt.ylim(img_height, 0)
-
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
-
-    plt.savefig(output_name, dpi=300, bbox_inches='tight')
-    plt.close()
-
-
 def draw_velodyne_on_image(
     img: np.ndarray,
     points_lidar: np.ndarray,
@@ -412,60 +316,53 @@ def draw_velodyne_on_image(
     **kwargs
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Draws velodyne points on the given image.
+    Project velodyne points on to image plane.
 
     Parameters:
-        img (np.ndarray): The input image.
-        points_lidar (np.ndarray): The Lidar points in Lidar coordinate system.
-        velo_to_cam (np.ndarray): The transformation matrix from Lidar to \
-            camera coordinate system.
-        r_rect (np.ndarray): The rotation matrix for rectifying the camera \
-            coordinate system.
-        p_rect (np.ndarray): The projection matrix for rectifying the camera \
-            coordinate system.
-        **kwargs: Additional keyword arguments for scatter_data_on_image.
+        img (np.ndarray): Image as a Numpy array of shape (H, W) \
+            or (H, W, 3) where H is the height and W is the width of the image.
+        points_lidar (np.ndarray): The coordinates of the velodyne points with respect \
+            to lidar as a Numpy array of shape (N, 3) where N is the number of points. 
+        velo_to_cam (np.ndarray): The transformation matrix from lidar to camera coordinates \
+            as a Numpy array of shape (4, 4).
+        r_rect (np.ndarray): The rotation matrix for rectifying the camera coordinates \
+            as a Numpy array of shape (4, 4).
+        p_rect (np.ndarray): The projection matrix for rectifying the camera coordinates \
+            as a Numpy array of shape (3, 4).
+        **kwargs: Additional keyword arguments for scatter_data_on_image function.
 
     Returns:
-        np.ndarray: Points in image coordinate system.
-        np.ndarray: The indices of the points that were successfully drawn on \
-            the image.
+        np.ndarray: Coordinates of the points with respect to image plane coordinates.
+        np.ndarray: The indices of the points that were successfully projected on \
+            to the image plane.
     """
+
+    assert img.ndim in (2, 3)
+    assert img.shape[0] > 10
+    assert img.shape[1] > 10
+    assert points_lidar.ndim == 2
+    assert points_lidar.shape[1] == 3
+    assert velo_to_cam.shape == (4, 4)
+    assert r_rect.shape == (4, 4)
+    assert p_rect.shape == (3, 4)
 
     img_height, img_width = img.shape[:2]
 
+    # convert from lidar coordinates to camera coordinates
     points_cam = lidar_to_cam(points_lidar, velo_to_cam)
+
+    # project the points on to the image plane
     points_img, idx = cam_to_img(
         points_cam, r_rect, p_rect, img_height=img_height, img_width=img_width
     )
-    scatter_on_image(img, points_img[idx], c=points_cam[idx, 2], **kwargs)
+
+    plotting.scatter_on_image(
+        img, points_img[idx], c=points_cam[idx, 2], **kwargs)
 
     return points_img, idx
 
-
-def draw_field_on_image(
-    field_on_img: np.ndarray,
-    img: np.ndarray,
-    title: str = 'Scatter Plot on Image',
-    xlabel: str = '',
-    ylabel: str = '',
-    output_name: str = 'scatter_plot_on_image.png'
-) -> None:
-
-    # Plot the image
-    plt.imshow(img)
-
-    # Overlay the heatmap
-    plt.imshow(field_on_img, cmap='hot', interpolation='nearest', alpha=0.5)
-
-    # Customize as needed (e.g., add labels, colorbar, etc.)
-    plt.title(title)
-    plt.colorbar(label="Intensity")
-
-    plt.show()
-    plt.savefig(output_name, dpi=300, bbox_inches='tight')
-
-
 # data exploration functions
+
 
 def in_radius(
     points: np.ndarray, center: np.ndarray, radius: float
@@ -618,4 +515,4 @@ def test_scatter_data_on_image(
     if isinstance(colors, str):
         colors = np.random.rand(data.shape[0])  # type: ignore
 
-    scatter_on_image(img, data, c=colors)
+    plotting.scatter_on_image(img, data, c=colors)
