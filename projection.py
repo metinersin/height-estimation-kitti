@@ -82,4 +82,3 @@ if __name__ == "__main__":
 
     plotting.draw_field_on_image(
         scale_field_on_img*100, img, title='Scale Field', output_name='scale_field_on_image.png')
-    print(scale_field_on_img)
