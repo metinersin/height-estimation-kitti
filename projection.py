@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 import kitti
 import point_cloud
+import plotting
 
 
 if __name__ == "__main__":
@@ -79,6 +80,6 @@ if __name__ == "__main__":
     )
     print(f'Scale field on image shape: {scale_field_on_img.shape}')
 
-    point_cloud.draw_field_on_image(
+    plotting.draw_field_on_image(
         scale_field_on_img*100, img, title='Scale Field', output_name='scale_field_on_image.png')
     print(scale_field_on_img)
