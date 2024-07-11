@@ -1,14 +1,7 @@
 __pycache__
 .venv
-.mypy_cache
-mypy.ini
-.pylintrc
+.vscode
 _*
-
-pykitti
-kitti-velo2cam
-lang-segment-anything
 *.png
-*.code-workspace
-
-projection.py
+*.jpg
+*.jpeg
