@@ -124,7 +124,7 @@ def image(date: str, drive: int, cam: int, frame: int) -> np.ndarray:
     Returns:
     - np.ndarray: The image as a (H, W) or (H, W, 3) NumPy array.
     """
-    return plt.imread(image_path(date, drive, cam))
+    return plt.imread(image_path(date, drive, cam, frame))
 
 
 def find_line_starting_with(path: str, s: str) -> str | None:
