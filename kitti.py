@@ -45,6 +45,21 @@ def velodyne_data_path(date: str, drive: int) -> str:
     return os.path.join(data_path(date, drive), 'velodyne_points', 'data')
 
 
+def velodyne_path(date: str, drive: int, frame: int) -> str:
+    """
+    Returns the path to the Velodyne data file for a specific date, drive, and frame.
+
+    Parameters:
+    - date (str): The date of the data in the format 'YYYY_MM_DD'.
+    - drive (int): The drive number.
+    - frame (int): The frame number.
+
+    Returns:
+    - str: The path to the Velodyne data file.
+    """
+    return os.path.join(velodyne_data_path(date, drive), f'{frame:010}.bin')
+
+
 def velodyne_data(date: str, drive: int, frame: int) -> np.ndarray:
     """
     Read the Velodyne data from the specified date, drive, and frame.
@@ -58,8 +73,8 @@ def velodyne_data(date: str, drive: int, frame: int) -> np.ndarray:
         np.ndarray: The velodyne data as a numpy array with shape (N, 3), \
             where N is the number of points.
     """
-    path = velodyne_data_path(date, drive)
-    with open(os.path.join(path, f'{frame:010}.bin'), 'rb') as f:
+    
+    with open(velodyne_path(date, drive, frame), 'rb') as f:
         velo_data = np.fromfile(f, dtype=np.float32).reshape((-1, 4))
     velo_data = velo_data[:, :3]
     return velo_data
@@ -80,6 +95,22 @@ def image_data_path(date: str, drive: int, cam: int) -> str:
     return os.path.join(data_path(date, drive), f'image_{cam:02}', 'data')
 
 
+def image_path(date: str, drive: int, cam: int, frame: int) -> str:
+    """
+    Returns the path to the image file for a specific date, drive, camera, and frame.
+
+    Parameters:
+    - date (str): The date of the data in the format 'YYYY_MM_DD'.
+    - drive (int): The drive number.
+    - cam (int): The camera number.
+    - frame (int): The frame number.
+
+    Returns:
+    - str: The path to the image file.
+    """
+    return os.path.join(image_data_path(date, drive, cam), f'{frame:010}.png')
+
+
 def image(date: str, drive: int, cam: int, frame: int) -> np.ndarray:
     """
     Read the KITTI image data for a specific date, drive, camera, and frame.
@@ -91,11 +122,9 @@ def image(date: str, drive: int, cam: int, frame: int) -> np.ndarray:
     - frame (int): The frame number of the KITTI dataset.
 
     Returns:
-    - np.ndarray: The image as a NumPy array.
-
+    - np.ndarray: The image as a (H, W) or (H, W, 3) NumPy array.
     """
-    path = image_data_path(date, drive, cam)
-    return plt.imread(os.path.join(path, f'{frame:010}.png'))
+    return plt.imread(image_path(date, drive, cam))
 
 
 def find_line_starting_with(path: str, s: str) -> str | None:
