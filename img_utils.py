@@ -133,25 +133,33 @@ def apply_mask(
     return img_masked
 
 
-def remove_small_components(mask, *, min_size):
+def remove_small_components(mask: np.ndarray, *, min_size: int) -> np.ndarray:
+    """
+    Remove small connected components from a binary mask.
+
+    Args:
+        mask (np.ndarray): Binary mask representing the image.
+        min_size (int): Minimum size of connected components to keep.
+
+    Returns:
+        np.ndarray: Cleaned binary mask with small components removed.
+    """
 
     # Perform binary opening to smooth corners and remove small noise
     opened = ndimage.binary_opening(mask)
 
     # Label connected components
-    labeled, num_features = ndimage.label(opened)
+    labeled_mask, num_components = ndimage.label(opened)
+    labels = np.asarray(range(num_components + 1))
 
     # Find sizes of all labeled features
-    sizes = np.bincount(labeled.ravel())
+    label_sizes = np.bincount(labeled_mask.ravel())
 
-    # Remove background (which is labeled 0)
-    sizes = sizes[1:]
+    # make small components disappear
+    for small_label in labels[label_sizes < min_size]:
+        labeled_mask[labeled_mask == small_label] = 0
 
-    # Create mask of features to keep
-    mask_sizes = sizes >= min_size
-
-    # Remove small objects
-    cleaned_mask = mask_sizes[labeled - 1]
+    cleaned_mask = labeled_mask.astype(bool)
 
     return cleaned_mask
 
