@@ -73,7 +73,7 @@ def velodyne_data(date: str, drive: int, frame: int) -> np.ndarray:
         np.ndarray: The velodyne data as a numpy array with shape (N, 3), \
             where N is the number of points.
     """
-    
+
     with open(velodyne_path(date, drive, frame), 'rb') as f:
         velo_data = np.fromfile(f, dtype=np.float32).reshape((-1, 4))
     velo_data = velo_data[:, :3]
@@ -109,6 +109,22 @@ def image_path(date: str, drive: int, cam: int, frame: int) -> str:
     - str: The path to the image file.
     """
     return os.path.join(image_data_path(date, drive, cam), f'{frame:010}.png')
+
+
+def image_shape(date: str, drive: int, cam: int) -> tuple[int, int]:
+    """
+    Returns the shape of the images for a specific date, drive, and camera.
+
+    Parameters:
+    - date (str): The date of the data in the format 'YYYY_MM_DD'.
+    - drive (int): The drive number.
+    - cam (int): The camera number.
+
+    Returns:
+    - tuple[int, int]: The shape of the images as a tuple (height, width).
+    """
+    img = plt.imread(image_path(date, drive, cam, 0))
+    return img.shape[:2]
 
 
 def image(date: str, drive: int, cam: int, frame: int) -> np.ndarray:
