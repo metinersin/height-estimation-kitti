@@ -1,5 +1,6 @@
 from PIL import Image
 import numpy as np
+from scipy import ndimage
 
 
 def np_to_pil(img: np.ndarray) -> Image.Image:
@@ -132,7 +133,30 @@ def apply_mask(
     return img_masked
 
 
-def segment(model, img: np.ndarray, prompt: str) -> np.ndarray:
+def remove_small_components(mask, *, min_size):
+
+    # Perform binary opening to smooth corners and remove small noise
+    opened = ndimage.binary_opening(mask)
+
+    # Label connected components
+    labeled, num_features = ndimage.label(opened)
+
+    # Find sizes of all labeled features
+    sizes = np.bincount(labeled.ravel())
+
+    # Remove background (which is labeled 0)
+    sizes = sizes[1:]
+
+    # Create mask of features to keep
+    mask_sizes = sizes >= min_size
+
+    # Remove small objects
+    cleaned_mask = mask_sizes[labeled - 1]
+
+    return cleaned_mask
+
+
+def segment(model, img: np.ndarray, prompt: str, *, min_size_ratio: float | None = 0.001) -> np.ndarray:
     """
     Segment an image using a model and a prompt.
 
@@ -140,6 +164,8 @@ def segment(model, img: np.ndarray, prompt: str) -> np.ndarray:
         model: The segmentation model.
         img (np.ndarray): The image to be segmented as a Numpy array of shape (H, W) or (H, W, 3).
         prompt (str): The prompt to be used for segmentation.
+        min_size_ratio (float, optional): The minimum size of connected components as a ratio of \
+            the image size. Defaults to 0.001.
 
     Returns:
         mask (np.ndarray): The mask as a Numpy array of shape (H, W) and of dtype bool.
@@ -157,5 +183,13 @@ def segment(model, img: np.ndarray, prompt: str) -> np.ndarray:
 
     # combine all the masks
     mask = masks.sum(axis=0).astype(bool)
+
+    if min_size_ratio is None or min_size_ratio == 0:
+        return mask
+
+    # remove small connected components
+    img_height, img_width = img.shape[:2]
+    min_size = round(img_height * img_width * min_size_ratio)
+    mask = remove_small_components(mask, min_size=min_size)
 
     return mask
