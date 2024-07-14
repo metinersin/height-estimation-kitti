@@ -33,9 +33,11 @@ def np_to_pil(img: np.ndarray) -> Image.Image:
         elif img.shape[2] == 4:
             mode = 'RGBA'
         else:
-            raise ValueError(f'Invalid image shape: {img.shape}')
+            raise ValueError(
+                f'Invalid image shape. Image has shape {img.shape} but it must have shape (H, W, 3) or (H, W, 4).')
     else:
-        raise ValueError(f'Invalid image shape: {img.shape}')
+        raise ValueError(
+            f'Invalid image shape. Image has shape {img.shape} but it must have shape (H, W) or (H, W, 3) or (H, W, 4).')
 
     img_pil = Image.fromarray(img, mode=mode).convert(mode=mode)
     return img_pil
@@ -57,15 +59,18 @@ def pil_to_np(img_pil: Image.Image) -> np.ndarray:
 
     if img_pil.mode == 'L':
         if img.ndim != 2:
-            raise ValueError(f'Invalid image shape: {img.shape}')
+            raise ValueError(
+                f'Invalid image shape. Image has shape {img.shape} but it must have shape (H, W).')
 
     if img_pil.mode == 'RGB':
         if not (img.ndim == 3 and img.shape[2] == 3):
-            raise ValueError(f'Invalid image shape: {img.shape}')
+            raise ValueError(
+                f'Invalid image shape. Image has shape {img.shape} but it must have shape (H, W, 3).')
 
     if img_pil.mode == 'RGBA':
         if not (img.ndim == 3 and img.shape[2] == 4):
-            raise ValueError(f'Invalid image shape: {img.shape}')
+            raise ValueError(
+                f'Invalid image shape. Image has shape {img.shape} but it mush have shape (H, W, 4).')
 
     img = img.astype(np.float32) / 255
     return img
