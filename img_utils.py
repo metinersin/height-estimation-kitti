@@ -156,8 +156,14 @@ def remove_small_components(mask: np.ndarray, *, min_size: int) -> np.ndarray:
     label_sizes = np.bincount(labeled_mask.ravel())
 
     # make small components disappear
-    for small_label in labels[label_sizes < min_size]:
-        labeled_mask[labeled_mask == small_label] = 0
+    small_labels = labels[label_sizes < min_size]
+
+    # for small_label in small_labels:
+    #     labeled_mask[labeled_mask == small_label] = 0
+
+    idx = labeled_mask[:, :, None] == small_labels
+    idx = idx.sum(axis=2).astype(bool)
+    labeled_mask[idx] = 0
 
     cleaned_mask = labeled_mask.astype(bool)
 
