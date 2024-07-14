@@ -130,3 +130,32 @@ def apply_mask(
     img_masked = pil_to_np(img_masked_pil)
 
     return img_masked
+
+
+def segment(model, img: np.ndarray, prompt: str) -> np.ndarray:
+    """
+    Segment an image using a model and a prompt.
+
+    Parameters:
+        model: The segmentation model.
+        img (np.ndarray): The image to be segmented as a Numpy array of shape (H, W) or (H, W, 3).
+        prompt (str): The prompt to be used for segmentation.
+
+    Returns:
+        mask (np.ndarray): The mask as a Numpy array of shape (H, W) and of dtype bool.
+    """
+
+    # convert the image to PIL
+    img_pil = np_to_pil(img).convert('RGB')
+
+    # segment the image
+    masks, _, _, _ = model.predict(img_pil, prompt)
+
+    # convert masks to a Numpy array
+    masks = masks.numpy()
+    assert masks.dtype == bool, masks.dtype
+
+    # combine all the masks
+    mask = masks.sum(axis=0).astype(bool)
+
+    return mask
