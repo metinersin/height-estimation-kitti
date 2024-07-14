@@ -123,8 +123,7 @@ def image_shape(date: str, drive: int, cam: int) -> tuple[int, int]:
     Returns:
     - tuple[int, int]: The shape of the images as a tuple (height, width).
     """
-    img = plt.imread(image_path(date, drive, cam, 0))
-    return img.shape[:2]
+    return image(date, drive, cam, 0).shape[:2]
 
 
 def image(date: str, drive: int, cam: int, frame: int) -> np.ndarray:
