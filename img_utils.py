@@ -96,17 +96,22 @@ def apply_mask(
     # convert the img to RGBA if it is not already
     if img.ndim == 2:
         img = img[:, :, np.newaxis].repeat(4, axis=2)
-
-    if img.ndim == 3 and img.shape[2] == 3:
+    elif img.ndim == 3 and img.shape[2] == 3:
         img = np.concatenate([img, np.ones_like(img[:, :, :1])], axis=2)
+    else:
+        raise ValueError(
+            'Invalid image shape. Image has shape {img.shape} but it must have shape (H, W, 2) or (H, W, 3).')
 
     assert img.ndim == 3
     assert img.shape[2] == 4
 
     # Convert the mask to an alpha channelled image
-    assert mask.ndim == 2
-    assert mask.shape == img.shape[:2]
-    assert mask.dtype == bool
+    if not (mask.shape == img.shape[:2]):
+        raise ValueError(
+            'Invalid mask shape. Mask has shape {mask.shape} but it must has the shape {img.shape}.')
+
+    if mask.dtype != bool:
+        raise ValueError('Mask should be a boolean array.')
 
     mask_alpha = np.zeros_like(img, dtype=np.uint8)
     mask_alpha[:, :, :3] = color
