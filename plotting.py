@@ -102,7 +102,7 @@ def scatter_on_image(
     points_img: np.ndarray,
     *,
     c: np.ndarray | None = None,
-    alpha: float = 0.5,
+    alpha: float = 0.2,
     size: int = 2,
     cmap: str = 'rainbow_r',
     title: str = '',

@@ -111,7 +111,7 @@ def image_path(date: str, drive: int, cam: int, frame: int) -> str:
     return os.path.join(image_data_path(date, drive, cam), f'{frame:010}.png')
 
 
-def image_shape(date: str, drive: int, cam: int) -> tuple[int, int]:
+def image_shape(date: str, drive: int, cam: int) -> tuple[int, int] | tuple[int, int, int]:
     """
     Returns the shape of the images for a specific date, drive, and camera.
 
@@ -121,9 +121,9 @@ def image_shape(date: str, drive: int, cam: int) -> tuple[int, int]:
     - cam (int): The camera number.
 
     Returns:
-    - tuple[int, int]: The shape of the images as a tuple (height, width).
+    - tuple[int, int] | tuple[int, int, itn]: The shape of the images as a tuple (H, W) or (H, W, 3).
     """
-    return image(date, drive, cam, 0).shape[:2]
+    return image(date, drive, cam, 0).shape
 
 
 def image(date: str, drive: int, cam: int, frame: int) -> np.ndarray:
