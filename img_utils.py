@@ -113,7 +113,7 @@ def apply_mask(
     # Convert the mask to an alpha channelled image
     if not (mask.shape == img.shape[:2]):
         raise ValueError(
-            f'Invalid mask shape. Mask has shape {mask.shape} but it must has the shape {img.shape}.')
+            f'Invalid mask shape. Mask has shape {mask.shape} but it must has the shape {img.shape[:2]}.')
 
     if mask.dtype != bool:
         raise ValueError('Mask should be a boolean array.')
