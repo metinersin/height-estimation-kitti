@@ -100,7 +100,7 @@ def apply_mask(
         img = np.concatenate([img, np.ones_like(img[:, :, :1])], axis=2)
     else:
         raise ValueError(
-            'Invalid image shape. Image has shape {img.shape} but it must have shape (H, W, 2) or (H, W, 3).')
+            f'Invalid image shape. Image has shape {img.shape} but it must have shape (H, W, 2) or (H, W, 3).')
 
     assert img.ndim == 3
     assert img.shape[2] == 4
@@ -108,7 +108,7 @@ def apply_mask(
     # Convert the mask to an alpha channelled image
     if not (mask.shape == img.shape[:2]):
         raise ValueError(
-            'Invalid mask shape. Mask has shape {mask.shape} but it must has the shape {img.shape}.')
+            f'Invalid mask shape. Mask has shape {mask.shape} but it must has the shape {img.shape}.')
 
     if mask.dtype != bool:
         raise ValueError('Mask should be a boolean array.')
