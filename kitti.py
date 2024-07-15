@@ -10,6 +10,7 @@ Constants:
 """
 
 import os
+from typing import Literal
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -80,14 +81,14 @@ def velodyne_data(date: str, drive: int, frame: int) -> np.ndarray:
     return velo_data
 
 
-def image_data_path(date: str, drive: int, cam: int) -> str:
+def image_data_path(date: str, drive: int, cam: Literal[0, 1, 2, 3]) -> str:
     """
     Returns the path to the image data for a specific date, drive, and camera.
 
     Parameters:
     - date (str): The date of the data in the format 'YYYY_MM_DD'.
     - drive (int): The drive number.
-    - cam (int): The camera number.
+    - cam (Literal[0, 1, 2, 3]): The camera number.
 
     Returns:
     - str: The path to the image data.
@@ -95,14 +96,14 @@ def image_data_path(date: str, drive: int, cam: int) -> str:
     return os.path.join(data_path(date, drive), f"image_{cam:02}", "data")
 
 
-def image_path(date: str, drive: int, cam: int, frame: int) -> str:
+def image_path(date: str, drive: int, cam: Literal[0, 1, 2, 3], frame: int) -> str:
     """
     Returns the path to the image file for a specific date, drive, camera, and frame.
 
     Parameters:
     - date (str): The date of the data in the format 'YYYY_MM_DD'.
     - drive (int): The drive number.
-    - cam (int): The camera number.
+    - cam (Literal[0, 1, 2, 3]): The camera number.
     - frame (int): The frame number.
 
     Returns:
@@ -111,8 +112,43 @@ def image_path(date: str, drive: int, cam: int, frame: int) -> str:
     return os.path.join(image_data_path(date, drive, cam), f"{frame:010}.png")
 
 
+def mask_data_path(date: str, drive: int, cam: Literal[0, 1, 2, 3], prompt: str) -> str:
+    """
+    Constructs the path for the mask data based on the given parameters.
+
+    Args:
+        date (str): The date of the data.
+        drive (int): The drive number.
+        cam (Literal[0, 1, 2, 3]): The camera number.
+        prompt (str): The prompt for the data.
+
+    Returns:
+        str: The path for the masked data.
+    """
+    return os.path.join(data_path(date, drive), f"segmentation_{cam:02}", f"{prompt}")
+
+
+def mask_path(
+    date: str, drive: int, cam: Literal[0, 1, 2, 3], prompt: str, frame: int
+) -> str:
+    """
+    Constructs the path for the mask file corresponding to the given parameters.
+
+    Args:
+        date (str): The date of the data.
+        drive (int): The drive number.
+        cam (Literal[0, 1, 2, 3]): The camera number.
+        frame (int): The frame number.
+        prompt (str): The prompt for the mask.
+
+    Returns:
+        str: The path to the mask file.
+    """
+    return os.path.join(mask_data_path(date, drive, cam, prompt), f"{frame:010}.npy")
+
+
 def image_shape(
-    date: str, drive: int, cam: int
+    date: str, drive: int, cam: Literal[0, 1, 2, 3]
 ) -> tuple[int, int] | tuple[int, int, int]:
     """
     Returns the shape of the images for a specific date, drive, and camera.
@@ -120,7 +156,7 @@ def image_shape(
     Parameters:
     - date (str): The date of the data in the format 'YYYY_MM_DD'.
     - drive (int): The drive number.
-    - cam (int): The camera number.
+    - cam (Literal[0, 1, 2, 3]): The camera number.
 
     Returns:
     - tuple[int, int] | tuple[int, int, itn]: The shape of the images as a tuple (H, W) or (H, W, 3).
@@ -128,14 +164,14 @@ def image_shape(
     return image(date, drive, cam, 0).shape  # type:ignore
 
 
-def image(date: str, drive: int, cam: int, frame: int) -> np.ndarray:
+def image(date: str, drive: int, cam: Literal[0, 1, 2, 3], frame: int) -> np.ndarray:
     """
     Read the KITTI image data for a specific date, drive, camera, and frame.
 
     Parameters:
     - date (str): The date of the data in the format 'YYYY_MM_DD'.
     - drive (int): The drive number of the KITTI dataset.
-    - cam (int): The camera number of the KITTI dataset.
+    - cam (Literal[0, 1, 2, 3]): The camera number of the KITTI dataset.
     - frame (int): The frame number of the KITTI dataset.
 
     Returns:
@@ -143,6 +179,22 @@ def image(date: str, drive: int, cam: int, frame: int) -> np.ndarray:
     """
     return plt.imread(image_path(date, drive, cam, frame))
 
+
+def mask(date: str, drive: int, cam: Literal[0, 1, 2, 3], prompt: str, frame: int) -> np.ndarray:
+    """
+    Read the mask for a specific date, drive, camera, prompt, and frame.
+
+    Parameters:
+    - date (str): The date of the data in the format 'YYYY_MM_DD'.
+    - drive (int): The drive number.
+    - cam (Literal[0, 1, 2, 3]): The camera number.
+    - prompt (str): The prompt value.
+    - frame (int): The frame number.
+
+    Returns:
+    - np.ndarray: The mask data as a NumPy array.
+    """
+    return np.load(mask_path(date, drive, cam, prompt, frame))
 
 def find_line_starting_with(path: str, s: str) -> str | None:
     """
@@ -257,14 +309,14 @@ def r_rect(date: str) -> np.ndarray:
     return r_rect  # type: ignore
 
 
-def p_rect(date: str, cam: int) -> np.ndarray:
+def p_rect(date: str, cam: Literal[0, 1, 2, 3]) -> np.ndarray:
     """
     Return the P_rect matrix for a given date and camera.
 
     Parameters:
         date (str): The date for which the calibration data is required. Its \
             format should be 'YYYY_MM_DD'.
-        cam (int): The camera number.
+        cam (Literal[0, 1, 2, 3]): The camera number.
 
     Returns:
         np.ndarray: 3x4 P_rect matrix as a numpy array.
@@ -284,14 +336,16 @@ def p_rect(date: str, cam: int) -> np.ndarray:
     return p_rect  # type: ignore
 
 
-def calib_data(date: str, cam: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def calib_data(
+    date: str, cam: Literal[0, 1, 2, 3]
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Return the calibration data for a specific date and camera.
 
     Parameters:
         date (str): The date for which the calibration data is required. Its \
             format should be 'YYYY_MM_DD'.
-        cam (int): The camera index.
+        cam (Literal[0, 1, 2, 3]): The camera index.
 
     Returns:
         tuple[np.ndarray, np.ndarray, np.ndarray]: A tuple containing the \
