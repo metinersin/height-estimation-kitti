@@ -15,9 +15,9 @@ def imshow(
     data: np.ndarray,
     *,
     cmap: str | None = None,
-    title: str = '',
-    xlabel: str = '',
-    ylabel: str = '',
+    title: str = "",
+    xlabel: str = "",
+    ylabel: str = "",
     output_name: str | None = None,
     **kwargs
 ) -> None:
@@ -54,16 +54,16 @@ def imshow(
 
     if output_name is not None:
         plt.show()
-        plt.savefig(output_name, dpi=300, bbox_inches='tight')
+        plt.savefig(output_name, dpi=300, bbox_inches="tight")
         plt.close()
 
 
 def draw(
     img: np.ndarray,
     *,
-    title: str = '',
-    xlabel: str = '',
-    ylabel: str = '',
+    title: str = "",
+    xlabel: str = "",
+    ylabel: str = "",
     output_name: str | None = None
 ) -> None:
     """
@@ -88,12 +88,12 @@ def draw(
     assert img.shape[1] > 10
 
     # If the image is a 3D array, it is assumed to be in RGB format.
-    cmap = 'gray' if img.ndim == 2 else None
+    cmap = "gray" if img.ndim == 2 else None
     imshow(img, title=title, xlabel=xlabel, ylabel=ylabel, cmap=cmap)
 
     if output_name is not None:
         plt.show()
-        plt.savefig(output_name, dpi=300, bbox_inches='tight')
+        plt.savefig(output_name, dpi=300, bbox_inches="tight")
         plt.close()
 
 
@@ -104,10 +104,10 @@ def scatter_on_image(
     c: np.ndarray | None = None,
     alpha: float = 0.2,
     size: int = 2,
-    cmap: str = 'rainbow_r',
-    title: str = '',
-    xlabel: str = '',
-    ylabel: str = '',
+    cmap: str = "rainbow_r",
+    title: str = "",
+    xlabel: str = "",
+    ylabel: str = "",
     output_name: str | None = None
 ) -> None:
     """
@@ -152,7 +152,7 @@ def scatter_on_image(
 
     if output_name is not None:
         plt.show()
-        plt.savefig(output_name, dpi=300, bbox_inches='tight')
+        plt.savefig(output_name, dpi=300, bbox_inches="tight")
         plt.close()
 
 
@@ -160,11 +160,11 @@ def draw_field_on_image(
     field_on_img: np.ndarray,
     img: np.ndarray,
     *,
-    cmap: str = 'hot',
+    cmap: str = "hot",
     alpha: float = 0.2,
-    title: str = '',
-    xlabel: str = '',
-    ylabel: str = '',
+    title: str = "",
+    xlabel: str = "",
+    ylabel: str = "",
     output_name: str | None = None,
     **kwargs
 ) -> None:
@@ -202,5 +202,5 @@ def draw_field_on_image(
 
     if output_name is not None:
         plt.show()
-        plt.savefig(output_name, dpi=300, bbox_inches='tight')
+        plt.savefig(output_name, dpi=300, bbox_inches="tight")
         plt.close()

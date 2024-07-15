@@ -164,7 +164,8 @@ def main() -> None:
                 img,
                 alpha=0.5,
                 output_name=debug_fname,
-                vmin=0, vmax=250
+                vmin=0,
+                vmax=250,
             )
 
 
