@@ -1,4 +1,4 @@
-'''
+"""
 This module provides utilities for working with the KITTI dataset, \
     specifically for accessing and visualizing data. The KITTI dataset is a \
     comprehensive set of data for mobile robotics and autonomous driving \
@@ -7,7 +7,7 @@ This module provides utilities for working with the KITTI dataset, \
 
 Constants:
     DATASET_PATH (str): The root path to the KITTI dataset on the local file system.
-'''
+"""
 
 import os
 import numpy as np
@@ -28,7 +28,7 @@ def data_path(date: str, drive: int) -> str:
         str: The path to the KITTI dataset for the specified date and drive.
     """
 
-    return os.path.join(DATASET_PATH, date, f'{date}_drive_{drive:04}_sync')
+    return os.path.join(DATASET_PATH, date, f"{date}_drive_{drive:04}_sync")
 
 
 def velodyne_data_path(date: str, drive: int) -> str:
@@ -42,7 +42,7 @@ def velodyne_data_path(date: str, drive: int) -> str:
     Returns:
     - str: The path to the Velodyne data.
     """
-    return os.path.join(data_path(date, drive), 'velodyne_points', 'data')
+    return os.path.join(data_path(date, drive), "velodyne_points", "data")
 
 
 def velodyne_path(date: str, drive: int, frame: int) -> str:
@@ -57,7 +57,7 @@ def velodyne_path(date: str, drive: int, frame: int) -> str:
     Returns:
     - str: The path to the Velodyne data file.
     """
-    return os.path.join(velodyne_data_path(date, drive), f'{frame:010}.bin')
+    return os.path.join(velodyne_data_path(date, drive), f"{frame:010}.bin")
 
 
 def velodyne_data(date: str, drive: int, frame: int) -> np.ndarray:
@@ -74,7 +74,7 @@ def velodyne_data(date: str, drive: int, frame: int) -> np.ndarray:
             where N is the number of points.
     """
 
-    with open(velodyne_path(date, drive, frame), 'rb') as f:
+    with open(velodyne_path(date, drive, frame), "rb") as f:
         velo_data = np.fromfile(f, dtype=np.float32).reshape((-1, 4))
     velo_data = velo_data[:, :3]
     return velo_data
@@ -92,7 +92,7 @@ def image_data_path(date: str, drive: int, cam: int) -> str:
     Returns:
     - str: The path to the image data.
     """
-    return os.path.join(data_path(date, drive), f'image_{cam:02}', 'data')
+    return os.path.join(data_path(date, drive), f"image_{cam:02}", "data")
 
 
 def image_path(date: str, drive: int, cam: int, frame: int) -> str:
@@ -108,10 +108,12 @@ def image_path(date: str, drive: int, cam: int, frame: int) -> str:
     Returns:
     - str: The path to the image file.
     """
-    return os.path.join(image_data_path(date, drive, cam), f'{frame:010}.png')
+    return os.path.join(image_data_path(date, drive, cam), f"{frame:010}.png")
 
 
-def image_shape(date: str, drive: int, cam: int) -> tuple[int, int] | tuple[int, int, int]:
+def image_shape(
+    date: str, drive: int, cam: int
+) -> tuple[int, int] | tuple[int, int, int]:
     """
     Returns the shape of the images for a specific date, drive, and camera.
 
@@ -123,7 +125,7 @@ def image_shape(date: str, drive: int, cam: int) -> tuple[int, int] | tuple[int,
     Returns:
     - tuple[int, int] | tuple[int, int, itn]: The shape of the images as a tuple (H, W) or (H, W, 3).
     """
-    return image(date, drive, cam, 0).shape
+    return image(date, drive, cam, 0).shape  # type:ignore
 
 
 def image(date: str, drive: int, cam: int, frame: int) -> np.ndarray:
@@ -154,7 +156,7 @@ def find_line_starting_with(path: str, s: str) -> str | None:
         str | None: The first line that starts with the given string, or None \
             if no such line is found.
     """
-    with open(path, 'r', encoding='utf8') as f:
+    with open(path, "r", encoding="utf8") as f:
         for line in f:
             if line.startswith(s):
                 return line.strip()
@@ -192,19 +194,19 @@ def velo_to_cam_calib_matrix(date: str) -> np.ndarray:
     """
     path = velo_to_cam_calib_path(date)
 
-    rotation = find_line_starting_with(path, 'R')
+    rotation = find_line_starting_with(path, "R")
     if rotation is None:
-        raise ValueError(f'R not found in {path}')
+        raise ValueError(f"R not found in {path}")
     rotation = rotation.split()[1:]  # type: ignore
-    rotation = np.asarray(list(map(float, rotation))
-                          ).reshape(3, 3)  # type: ignore
+    rotation = np.asarray(list(map(float, rotation))).reshape(3, 3)  # type: ignore
 
-    translation = find_line_starting_with(path, 'T')
+    translation = find_line_starting_with(path, "T")
     if translation is None:
-        raise ValueError(f'T not found in {path}')
+        raise ValueError(f"T not found in {path}")
     translation = translation.split()[1:]  # type: ignore
-    translation = np.asarray(list(map(float, translation))
-                             ).reshape(3, 1)  # type: ignore
+    translation = np.asarray(list(map(float, translation))).reshape(
+        3, 1
+    )  # type: ignore
 
     velo_to_cam = np.column_stack((rotation, translation))
     velo_to_cam = np.row_stack((velo_to_cam, np.array([0, 0, 0, 1])))
@@ -243,10 +245,9 @@ def r_rect(date: str) -> np.ndarray:
 
     path = cam_to_cam_calib_path(date)
 
-    line = find_line_starting_with(path, 'R_rect_00')
+    line = find_line_starting_with(path, "R_rect_00")
     if line is None:
-        raise ValueError(
-            f'R_rect_00 not found in {path}')
+        raise ValueError(f"R_rect_00 not found in {path}")
 
     r_rect = line.split()[1:]
     r_rect = np.asarray(list(map(float, r_rect))).reshape(3, 3)  # type: ignore
@@ -274,9 +275,9 @@ def p_rect(date: str, cam: int) -> np.ndarray:
 
     path = cam_to_cam_calib_path(date)
 
-    line = find_line_starting_with(path, f'P_rect_{cam:02}')
+    line = find_line_starting_with(path, f"P_rect_{cam:02}")
     if line is None:
-        raise ValueError(f'P_rect_{cam:02} not found in {path}')
+        raise ValueError(f"P_rect_{cam:02} not found in {path}")
 
     p_rect = line.split()[1:]
     p_rect = np.asarray(list(map(float, p_rect))).reshape(3, 4)  # type: ignore
