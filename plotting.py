@@ -165,7 +165,8 @@ def draw_field_on_image(
     title: str = '',
     xlabel: str = '',
     ylabel: str = '',
-    output_name: str | None = None
+    output_name: str | None = None,
+    **kwargs
 ) -> None:
     """
     Draw the heatmap plot of a field on an image.
@@ -196,7 +197,7 @@ def draw_field_on_image(
 
     draw(img, title=title, xlabel=xlabel, ylabel=ylabel)
 
-    imshow(field_on_img, cmap=cmap, alpha=alpha)
+    imshow(field_on_img, cmap=cmap, alpha=alpha, **kwargs)
     plt.colorbar(label="Intensity")
 
     if output_name is not None:
