@@ -161,7 +161,7 @@ def draw_field_on_image(
     img: np.ndarray,
     *,
     cmap: str = 'hot',
-    alpha: float = 0.5,
+    alpha: float = 0.2,
     title: str = '',
     xlabel: str = '',
     ylabel: str = '',

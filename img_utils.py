@@ -170,7 +170,9 @@ def remove_small_components(mask: np.ndarray, *, min_size: int) -> np.ndarray:
     return cleaned_mask
 
 
-def segment(model, img: np.ndarray, prompt: str, *, min_size_ratio: float | None = 0.001) -> np.ndarray:
+def segment(
+        model, img: np.ndarray, prompt: str, *, 
+        min_size_ratio: float | None = 0.002) -> np.ndarray:
     """
     Segment an image using a model and a prompt.
 
@@ -198,6 +200,7 @@ def segment(model, img: np.ndarray, prompt: str, *, min_size_ratio: float | None
     # combine all the masks
     mask = masks.sum(axis=0).astype(bool)
 
+    # if min_size is not set, then do not remove small connected components
     if min_size_ratio is None or min_size_ratio == 0:
         return mask
 
@@ -205,5 +208,6 @@ def segment(model, img: np.ndarray, prompt: str, *, min_size_ratio: float | None
     img_height, img_width = img.shape[:2]
     min_size = round(img_height * img_width * min_size_ratio)
     mask = remove_small_components(mask, min_size=min_size)
+    mask = ~remove_small_components(~mask, min_size=min_size)
 
     return mask
