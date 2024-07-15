@@ -149,7 +149,7 @@ def remove_small_components(mask: np.ndarray, *, min_size: int) -> np.ndarray:
     opened = ndimage.binary_opening(mask)
 
     # Label connected components
-    labeled_mask, num_components = ndimage.label(opened)
+    labeled_mask, num_components = ndimage.label(opened) # type: ignore
     labels = np.asarray(range(num_components + 1))
 
     # Find sizes of all labeled features
@@ -194,7 +194,10 @@ def segment(
     masks, _, _, _ = model.predict(img_pil, prompt)
 
     # convert masks to a Numpy array
-    masks = masks.numpy()
+    masks = masks.cpu().numpy()
+
+    assert masks.ndim == 3, masks.shape
+    assert masks.size >= 9, masks.size
     assert masks.dtype == bool, masks.dtype
 
     # combine all the masks
