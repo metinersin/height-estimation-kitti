@@ -9,7 +9,6 @@ from tqdm import tqdm
 import kitti
 import point_cloud as pc
 import plotting
-import arg_utils as au
 
 
 def parse_args() -> tuple[
@@ -37,9 +36,9 @@ def parse_args() -> tuple[
     )
 
     # Add arguments
-    parser.add_argument("date", type=au.valid_date, help="Date in YYYY_MM_DD format")
+    parser.add_argument("date", type=kitti.valid_date, help="Date in YYYY_MM_DD format")
     parser.add_argument(
-        "drive", type=au.positive_int, help="Drive number (non-negative integer)"
+        "drive", type=int, help="Drive number (non-negative integer)"
     )
     parser.add_argument(
         "cam", type=int, choices=[0, 1, 2, 3], help="Cam number (must be 0, 1, 2, or 3)"
