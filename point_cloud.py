@@ -297,58 +297,6 @@ def lidar_to_img(
     return points_img, idx
 
 
-def normals(
-    points_lidar: np.ndarray, *, neighbors: int = 30, radius: float | None = 10
-) -> np.ndarray:
-    """
-    Compute the normal vectors of a point cloud.
-
-    Parameters:
-        points_lidar (np.ndarray): The input point cloud as a numpy array of shape \
-            (N, 3), where N is the number of points and each point is \
-            represented by its (x, y, z) coordinates.
-        neighbors (int, optional): The number of nearest neighbors to consider \
-            when estimating normals. Defaults to 30.
-        radius (float | None, optional): The radius within which to search for \
-            neighbors when estimating normals. If set to None, the search is \
-            performed based on the number of neighbors. Defaults to 0.1.
-
-    Returns:
-        np.ndarray: The computed normal vectors as a numpy array of shape \
-            (N, 3), where N is the number of points and each normal vector is \
-            represented by its (nx, ny, nz) components.
-    """
-
-    # check the input
-    _check_points_lidar(points_lidar)
-
-    if neighbors <= 0:
-        raise ValueError(
-            f"Invalid value for `neighbors`. It must be greater than 0 but it is {neighbors}."
-        )
-
-    if radius is not None:
-        if radius <= 0:
-            raise ValueError(
-                f"Invalid value for `radius`. It must be positive but it is {radius}."
-            )
-
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points_lidar)
-
-    if radius is None:
-        search_param = o3d.geometry.KDTreeSearchParamKNN(knn=neighbors)
-    else:
-        search_param = o3d.geometry.KDTreeSearchParamHybrid(
-            radius=radius, max_nn=neighbors
-        )
-
-    pcd.estimate_normals(search_param=search_param)
-    pcd.orient_normals_consistent_tangent_plane(100)
-
-    return np.asarray(pcd.normals)
-
-
 def to_field_on_img(
     field_on_lidar: np.ndarray,
     points_lidar: np.ndarray,
@@ -489,7 +437,7 @@ def scale_field_on_lidar(
     )
 
     # calculate the normal vectors
-    normal_vectors = normals(points_lidar, neighbors=neighbors, radius=radius)
+    normal_vectors = normals_on_lidar(points_lidar, neighbors=neighbors, radius=radius)
     normal_vectors *= scaling
 
     # change from lidar coordinates to camera coordinates and project the displaced points on to image plane
@@ -588,6 +536,200 @@ def scale_field_on_img(
     )
 
     return field_on_img
+
+
+def to_vector_on_img(
+    vector_on_lidar: np.ndarray,
+    points_lidar: np.ndarray,
+    *,
+    mask: np.ndarray | None = None,
+    interpolation: Literal["linear", "nearest", "cubic"] | None = None,
+    img_size: tuple[int, int],
+    velo_to_cam: np.ndarray,
+    r_rect: np.ndarray,
+    p_rect: np.ndarray,
+) -> np.ndarray:
+    """
+    Convert a vector field defined on lidar coordinates to a vector field defined on image coordinates.
+
+    Args:
+        vector_on_lidar (np.ndarray): Vector field defined on lidar coordinates as a Numpy array \
+            of shape (N, D)
+        points_lidar (np.ndarray): lidar points as a Numpy array of shape (N, 3)
+        mask (np.ndarray, optional): Mask to ignore points outside the mask as a Numpy array \
+            of shape `img_size`. Defaults to None.
+        interpolation (None | linear | nearest | cubic): Interpolation method. If None, no \
+            interpolation occurs. Defaults to None.
+        img_size (tuple[int, int]): Size of the image.
+        velo_to_cam (np.ndarray): Transformation matrix from lidar to camera coordinates.
+        r_rect (np.ndarray): Rectification matrix.
+        p_rect (np.ndarray): Projection matrix.
+
+    Returns:
+        np.ndarray: Vector field defined on image coordinates as a Numpy array of shape (H, W, D) where (H, W) is `img_size'.
+    """
+    # check the input
+    _check_img_size(img_size)
+    _check_points_lidar(points_lidar)
+    _check_velo_to_cam(velo_to_cam)
+    _check_r_rect(r_rect)
+    _check_p_rect(p_rect)
+
+    if mask is not None:
+        if mask.shape != img_size:
+            raise ValueError(
+                f"Invalid shape for `mask`. It must be of shape {img_size} but it is of shape {mask.shape}."
+            )
+
+    # treat each dimension as a field
+    D = vector_on_lidar.shape[1]
+    vector_on_img = np.full((*img_size, D), np.nan)
+    for i in range(D):
+        vector_on_img[:, :, i] = to_field_on_img(
+            vector_on_lidar[:, i],
+            points_lidar,
+            mask=mask,
+            interpolation=interpolation,
+            img_size=img_size,
+            velo_to_cam=velo_to_cam,
+            r_rect=r_rect,
+            p_rect=p_rect,
+        )
+
+    return vector_on_img
+
+
+def normals_on_lidar(
+    points_lidar: np.ndarray, *, neighbors: int = 50, radius: float | None = 10
+) -> np.ndarray:
+    """
+    Compute the normal vectors of a point cloud.
+
+    Parameters:
+        points_lidar (np.ndarray): The input point cloud as a numpy array of shape \
+            (N, 3), where N is the number of points and each point is \
+            represented by its (x, y, z) coordinates.
+        neighbors (int, optional): The number of nearest neighbors to consider \
+            when estimating normals. Defaults to 50.
+        radius (float | None, optional): The radius within which to search for \
+            neighbors when estimating normals. If set to None, the search is \
+            performed based on the number of neighbors. Defaults to 10.
+
+    Returns:
+        np.ndarray: The computed normal vectors as a numpy array of shape \
+            (N, 3), where N is the number of points and each normal vector is \
+            represented by its (nx, ny, nz) components.
+    """
+
+    # check the input
+    _check_points_lidar(points_lidar)
+
+    if neighbors <= 0:
+        raise ValueError(
+            f"Invalid value for `neighbors`. It must be greater than 0 but it is {neighbors}."
+        )
+
+    if radius is not None:
+        if radius <= 0:
+            raise ValueError(
+                f"Invalid value for `radius`. It must be positive but it is {radius}."
+            )
+
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points_lidar)
+
+    if radius is None:
+        search_param = o3d.geometry.KDTreeSearchParamKNN(knn=neighbors)
+    else:
+        search_param = o3d.geometry.KDTreeSearchParamHybrid(
+            radius=radius, max_nn=neighbors
+        )
+
+    pcd.estimate_normals(search_param=search_param)
+    pcd.orient_normals_consistent_tangent_plane(100)
+
+    return np.asarray(pcd.normals)
+
+
+def normals_on_img(
+    points_lidar: np.ndarray,
+    *,
+    mask: np.ndarray | None = None,
+    interpolation: Literal["linear", "nearest", "cubic"] | None = None,
+    img_size: tuple[int, int],
+    velo_to_cam: np.ndarray,
+    r_rect: np.ndarray,
+    p_rect: np.ndarray,
+    neighbors: int = 50,
+    radius: float | None = 10,
+) -> np.ndarray:
+    """
+    Compute the normal vectors of a point cloud on the image coordinates.
+
+    Parameters:
+        points_lidar (np.ndarray): The input point cloud as a numpy array of shape \
+            (N, 3), where N is the number of points and each point is \
+            represented by its (x, y, z) coordinates.
+        mask (np.ndarray, optional): Mask to ignore points outside the mask as a Numpy array \
+            of shape `img_size`. Defaults to None.
+        interpolation (None | linear | nearest | cubic): Interpolation method. If None, no \
+            interpolation occurs. Defaults to None.
+        img_size (tuple[int, int]): Size of the image.
+        velo_to_cam (np.ndarray): Transformation matrix from lidar to camera coordinates.
+        r_rect (np.ndarray): Rectification matrix.
+        p_rect (np.ndarray): Projection matrix.
+        neighbors (int, optional): The number of nearest neighbors to consider \
+            when estimating normals. Defaults to 50.
+        radius (float | None, optional): The radius within which to search for \
+            neighbors when estimating normals. If set to None, the search is \
+            performed based on the number of neighbors. Defaults to 10.
+
+    Returns:
+        np.ndarray: The computed normal vectors as a numpy array of shape \
+            (H, W, 3), where (H, W) is `img_size`.
+    """
+
+    # check the input
+    _check_img_size(img_size)
+    _check_points_lidar(points_lidar)
+    _check_velo_to_cam(velo_to_cam)
+    _check_r_rect(r_rect)
+    _check_p_rect(p_rect)
+
+    if mask is not None:
+        if mask.shape != img_size:
+            raise ValueError(
+                f"Invalid shape for `mask`. It must be of shape {img_size} but it is of shape {mask.shape}."
+            )
+
+    if neighbors <= 0:
+        raise ValueError(
+            f"Invalid value for `neighbors`. It must be greater than 0 but it is {neighbors}."
+        )
+
+    if radius is not None:
+        if radius <= 0:
+            raise ValueError(
+                f"Invalid value for `radius`. It must be positive but it is {radius}."
+            )
+
+    # calculate the normal vectors on lidar
+    vector_on_lidar = normals_on_lidar(points_lidar, neighbors=neighbors, radius=radius)
+    vector_on_img = to_vector_on_img(
+        vector_on_lidar,
+        points_lidar,
+        mask=mask,
+        interpolation=interpolation,
+        img_size=img_size,
+        velo_to_cam=velo_to_cam,
+        r_rect=r_rect,
+        p_rect=p_rect,
+    )
+
+    # normalization
+    vector_on_img /= np.linalg.norm(vector_on_img, axis=2, keepdims=True)
+
+    return vector_on_img
 
 
 # plotting functions
