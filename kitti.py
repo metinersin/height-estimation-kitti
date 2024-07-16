@@ -19,10 +19,49 @@ import matplotlib.pyplot as plt
 DATASET_PATH = "/mnt/d/KITTI Dataset"
 
 
+def all_date_drive() -> list[dict[str, str | int]]:  # type: ignore
+    """
+    Returns a list of dictionaries containing valid dates and drives from the KITTI dataset.
+
+    Returns:
+        A list of dictionaries, where each dictionary contains the 'date' and 'drive' information.
+        The 'date' is a string representing the valid date, and 'drive' is an integer representing the drive number.
+    """
+    lst = []
+    for date in os.listdir(DATASET_PATH):
+        if not is_valid_date(date):
+            continue
+
+        for drive in os.listdir(os.path.join(DATASET_PATH, date)):
+            if re.match(date + r"_drive_\d{4}_sync", drive) is None:
+                continue
+
+            drive = int(drive.strip().split("_")[4])
+
+            lst.append({"date": date, "drive": drive})
+
+    return lst
+
+
+import re
+
+
+def is_valid_date(date: str) -> bool:
+    """
+    Check if the given date string is in the format 'YYYY_MM_DD'.
+
+    Args:
+        date (str): The date string to be validated.
+
+    Returns:
+        bool: True if the date string is in the correct format, False otherwise.
+    """
+    return re.match(r"^\d{4}_\d{2}_\d{2}$", date) is not None
+
+
 def valid_date(date_str: str) -> str:
     """Validate that the provided string matches the YYYY_MM_DD format."""
-    pattern = r"^\d{4}_\d{2}_\d{2}$"
-    if not re.match(pattern, date_str):
+    if not is_valid_date(date_str):
         raise ValueError(f"Not a valid date: '{date_str}'. Expected format: YYYY_MM_DD")
     return date_str
 
