@@ -11,10 +11,20 @@ Constants:
 
 import os
 from typing import Literal
+import re
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 DATASET_PATH = "/mnt/d/KITTI Dataset"
+
+
+def valid_date(date_str: str) -> str:
+    """Validate that the provided string matches the YYYY_MM_DD format."""
+    pattern = r"^\d{4}_\d{2}_\d{2}$"
+    if not re.match(pattern, date_str):
+        raise ValueError(f"Not a valid date: '{date_str}'. Expected format: YYYY_MM_DD")
+    return date_str
 
 
 def data_path(date: str, drive: int) -> str:
@@ -29,6 +39,9 @@ def data_path(date: str, drive: int) -> str:
         str: The path to the KITTI dataset for the specified date and drive.
     """
 
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
     return os.path.join(DATASET_PATH, date, f"{date}_drive_{drive:04}_sync")
 
 
@@ -43,6 +56,9 @@ def velodyne_data_path(date: str, drive: int) -> str:
     Returns:
     - str: The path to the Velodyne data.
     """
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
     return os.path.join(data_path(date, drive), "velodyne_points", "data")
 
 
@@ -58,6 +74,11 @@ def velodyne_path(date: str, drive: int, frame: int) -> str:
     Returns:
     - str: The path to the Velodyne data file.
     """
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
+    if frame < 0:
+        raise ValueError(f"Frame number must be a non-negative integer: {frame}")
     return os.path.join(velodyne_data_path(date, drive), f"{frame:010}.bin")
 
 
@@ -74,7 +95,11 @@ def velodyne_data(date: str, drive: int, frame: int) -> np.ndarray:
         np.ndarray: The velodyne data as a numpy array with shape (N, 3), \
             where N is the number of points.
     """
-
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
+    if frame < 0:
+        raise ValueError(f"Frame number must be a non-negative integer: {frame}")
     with open(velodyne_path(date, drive, frame), "rb") as f:
         velo_data = np.fromfile(f, dtype=np.float32).reshape((-1, 4))
     velo_data = velo_data[:, :3]
@@ -93,6 +118,9 @@ def image_data_path(date: str, drive: int, cam: Literal[0, 1, 2, 3]) -> str:
     Returns:
     - str: The path to the image data.
     """
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
     return os.path.join(data_path(date, drive), f"image_{cam:02}", "data")
 
 
@@ -109,6 +137,11 @@ def image_path(date: str, drive: int, cam: Literal[0, 1, 2, 3], frame: int) -> s
     Returns:
     - str: The path to the image file.
     """
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
+    if frame < 0:
+        raise ValueError(f"Frame number must be a non-negative integer: {frame}")
     return os.path.join(image_data_path(date, drive, cam), f"{frame:010}.png")
 
 
@@ -125,6 +158,9 @@ def mask_data_path(date: str, drive: int, cam: Literal[0, 1, 2, 3], prompt: str)
     Returns:
         str: The path for the masked data.
     """
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
     return os.path.join(data_path(date, drive), f"segmentation_{cam:02}", f"{prompt}")
 
 
@@ -144,6 +180,11 @@ def mask_path(
     Returns:
         str: The path to the mask file.
     """
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
+    if frame < 0:
+        raise ValueError(f"Frame number must be a non-negative integer: {frame}")
     return os.path.join(mask_data_path(date, drive, cam, prompt), f"{frame:010}.npy")
 
 
@@ -161,6 +202,9 @@ def image_shape(
     Returns:
     - tuple[int, int] | tuple[int, int, itn]: The shape of the images as a tuple (H, W) or (H, W, 3).
     """
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
     return image(date, drive, cam, 0).shape  # type:ignore
 
 
@@ -177,10 +221,17 @@ def image(date: str, drive: int, cam: Literal[0, 1, 2, 3], frame: int) -> np.nda
     Returns:
     - np.ndarray: The image as a (H, W) or (H, W, 3) NumPy array.
     """
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
+    if frame < 0:
+        raise ValueError(f"Frame number must be a non-negative integer: {frame}")
     return plt.imread(image_path(date, drive, cam, frame))
 
 
-def mask(date: str, drive: int, cam: Literal[0, 1, 2, 3], prompt: str, frame: int) -> np.ndarray:
+def mask(
+    date: str, drive: int, cam: Literal[0, 1, 2, 3], prompt: str, frame: int
+) -> np.ndarray:
     """
     Read the mask for a specific date, drive, camera, prompt, and frame.
 
@@ -194,7 +245,13 @@ def mask(date: str, drive: int, cam: Literal[0, 1, 2, 3], prompt: str, frame: in
     Returns:
     - np.ndarray: The mask data as a NumPy array.
     """
+    valid_date(date)
+    if drive <= 0:
+        raise ValueError(f"Drive number must be a positive integer: {drive}")
+    if frame < 0:
+        raise ValueError(f"Frame number must be a non-negative integer: {frame}")
     return np.load(mask_path(date, drive, cam, prompt, frame))
+
 
 def find_line_starting_with(path: str, s: str) -> str | None:
     """
@@ -227,6 +284,7 @@ def velo_to_cam_calib_path(date: str) -> str:
     Returns:
     - str: The path to the calibration file.
     """
+    valid_date(date)
     return os.path.join(DATASET_PATH, date, "calib_velo_to_cam.txt")
 
 
@@ -244,6 +302,7 @@ def velo_to_cam_calib_matrix(date: str) -> np.ndarray:
     Raises:
         ValueError: If the rotation or translation data is not found in the calibration file.
     """
+    valid_date(date)
     path = velo_to_cam_calib_path(date)
 
     rotation = find_line_starting_with(path, "R")
@@ -277,6 +336,7 @@ def cam_to_cam_calib_path(date: str) -> str:
     Returns:
     - str: The path to the camera to camera calibration file.
     """
+    valid_date(date)
     return os.path.join(DATASET_PATH, date, "calib_cam_to_cam.txt")
 
 
@@ -294,6 +354,7 @@ def r_rect(date: str) -> np.ndarray:
     Raises:
         ValueError: If R_rect_00 is not found in the calibration file.
     """
+    valid_date(date)
 
     path = cam_to_cam_calib_path(date)
 
@@ -324,6 +385,7 @@ def p_rect(date: str, cam: Literal[0, 1, 2, 3]) -> np.ndarray:
     Raises:
         ValueError: If P_rect_{cam:02} is not found in the calibration file.
     """
+    valid_date(date)
 
     path = cam_to_cam_calib_path(date)
 
@@ -355,6 +417,8 @@ def calib_data(
             - r_rect_0: The rectifying rotation matrix for the left camera.
             - p_rect_cam: The projection matrix for the specified camera.
     """
+    valid_date(date)
+
     velo_to_cam = velo_to_cam_calib_matrix(date)
     r_rect_0 = r_rect(date)
     p_rect_cam = p_rect(date, cam)
