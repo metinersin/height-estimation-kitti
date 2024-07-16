@@ -13,8 +13,7 @@ import arg_utils as au
 
 def parse_args() -> tuple[str, int, Literal[0, 1, 2, 3], bool]:
     """
-    Parse the command line arguments and return them as a tuple. Example usage: \
-        python projection.py 2011_09_26 1 2 --debug
+    Parse the command line arguments and return them as a tuple.
 
     Returns:
         date (str): Date in YYYY_MM_DD format.
@@ -24,7 +23,7 @@ def parse_args() -> tuple[str, int, Literal[0, 1, 2, 3], bool]:
     """
     parser = argparse.ArgumentParser(
         description="Project the velodyne points at the specified date, drive on to the image plane. \
-            Example usage: python projection.py 2011_09_26 1 2 --debug"
+            Example usage: python projection.py 2011_09_26 2 2 --debug"
     )
 
     # Add arguments

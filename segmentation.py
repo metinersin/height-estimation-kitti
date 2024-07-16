@@ -13,8 +13,7 @@ import arg_utils as au
 
 def parse_args() -> tuple[str, int, Literal[0, 1, 2, 3], str, bool]:
     """
-    Parse the command line arguments and return them as a tuple. Example usage: \
-        python segmentation.py 2011_09_26 1 2 --prompt ground --debug
+    Parse the command line arguments and return them as a tuple.
 
     Returns:
         date (str): Date in YYYY_MM_DD format.
@@ -25,7 +24,7 @@ def parse_args() -> tuple[str, int, Literal[0, 1, 2, 3], str, bool]:
     """
     parser = argparse.ArgumentParser(
         description="Segment the images at the specified date, drive and cam using the prompt. \
-            Example usage: python segmentation.py 2011_09_26 1 2 --prompt ground --debug"
+            Example usage: python segmentation.py 2011_09_26 2 2 --prompt ground --debug"
     )
 
     # Add arguments

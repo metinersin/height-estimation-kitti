@@ -21,8 +21,7 @@ def parse_args() -> tuple[
     bool,
 ]:
     """
-    Parse the command line arguments and return them as a tuple. Example usage: \
-        python scale_field.py 2011_09_26 1 0 --debug
+    Parse the command line arguments and return them as a tuple.
 
     Returns:
         date (str): Date in YYYY_MM_DD format.
@@ -31,10 +30,10 @@ def parse_args() -> tuple[
         debug (bool): Whether to save points on images.
     """
     parser = argparse.ArgumentParser(
-        description="Calculate the scale field produced by the velodyne points an an image at the \
+        description="Calculate the scale field produced by the velodyne points at the \
             specified date, drive and cam onto the image plane. Scale field is calculated inside a \
             segmentation mask, so you need to run the segmentation.py first. Example usage: python \
-            scale_field.py 2011_09_26 1 0 --prompt ground --debug"
+            scale_field.py 2011_09_26 2 2 --prompt ground --debug"
     )
 
     # Add arguments
@@ -70,54 +69,55 @@ def main() -> None:
     # read the dataset parameters, interpolation mode, and the segmentation prompt
     date, drive, cam, prompt, interpolation, debug = parse_args()
 
-    # path to the images and velodyne points
+    print(f"Main folder: {kitti.DATASET_PATH}")
+
     data_path = kitti.data_path(date, drive)
+    print(f"Current folder: {data_path}")
+
     image_data_path = kitti.image_data_path(date, drive, cam)
-    velodyne_data_path = kitti.velodyne_data_path(date, drive)
-    mask_data_path = kitti.mask_data_path(date, drive, cam, prompt)
+    print(f"Images folder: {image_data_path}")
 
     num_img = len(os.listdir(image_data_path))
-    num_frames = len(os.listdir(velodyne_data_path))
+    print(f"Number of images: {num_img}")
+
+    mask_data_path = kitti.mask_data_path(date, drive, cam, prompt)
+    print(f"Segmentation mask folder: {mask_data_path}")
+
     img_shape = kitti.image_shape(date, drive, cam)
     img_size = img_shape[:2]
+    print(f"Shape of the images: {img_shape}")
 
-    assert num_img == num_frames, "Number of images and velodyne data do not match."
+    velodyne_data_path = kitti.velodyne_data_path(date, drive)
+    print(f"Velodyne folder: {velodyne_data_path}")
+
+    num_velo = len(os.listdir(velodyne_data_path))
+    print(f"Number of velodyne files: {num_velo}")
+
+    assert num_img == num_velo, "Number of images and velodyne files do not match."
+    num_frames = num_img
 
     # read the transformation matrices
     velo_to_cam, r_rect, p_rect = kitti.calib_data(date, cam)
-
-    # output folder
-    output_folder = os.path.join(data_path, f"scale_field_{cam:02}")
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    # debug output folder
-    if debug:
-        debug_folder = os.path.join(data_path, f"scale_field_{cam:02}_debug")
-        if not os.path.exists(debug_folder):
-            os.makedirs(debug_folder)
-
-    print()
-    print(f"Calculating the scale filed of the velodyne points at {velodyne_data_path}")
-    print(f"Number of point clouds: {num_frames}")
-    print(f"Image folder: {image_data_path}")
-    print(f"Shape of the images: {img_shape}")
-    print(f"Number of images: {num_img}")
-    print(f"Segmentation mask folder: {mask_data_path}")
-    print(f"Saving the scale field to {output_folder}")
-
-    if debug:
-        print(f"Debug mode is enabled.")
-        print(f"Saving debug images to {debug_folder}")
-    print()
-
     print(f"Velodyne to camera transformation matrix:")
     print(f"{velo_to_cam}")
     print(f"Rectifying rotation matrix:")
     print(f"{r_rect}")
     print(f"Projection matrix:")
     print(f"{p_rect}")
-    print()
+
+    # output folder
+    output_folder = os.path.join(data_path, f"scale_field_{cam:02}")
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    print(f"Output folder: {output_folder}")
+
+    # debug output folder
+    if debug:
+        debug_folder = os.path.join(data_path, f"scale_field_{cam:02}_debug")
+        if not os.path.exists(debug_folder):
+            os.makedirs(debug_folder)
+        print(f"Debug mode is active.")
+        print(f"Debug folder: {debug_folder}")
 
     for frame in tqdm(range(num_frames), desc="Calculating the scale field"):
 
