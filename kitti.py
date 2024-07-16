@@ -43,9 +43,6 @@ def all_date_drive() -> list[dict[str, str | int]]:  # type: ignore
     return lst
 
 
-import re
-
-
 def is_valid_date(date: str) -> bool:
     """
     Check if the given date string is in the format 'YYYY_MM_DD'.
